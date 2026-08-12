@@ -3,6 +3,7 @@ import {
   computeDecay,
   applyCare,
   simulateAnts,
+  populationCap,
 } from '../src/game/simulation';
 import { AntFarm } from '../src/types';
 
@@ -54,19 +55,89 @@ describe('computeDecay', () => {
     expect(decayed.cleanliness).toBe(0);
   });
 
-  it('loses health and population when resources are critically low', () => {
-    const longAgo = Date.now() - 100 * 3600000;
-    const farm = makeFarm({ lastFedAt: longAgo, lastWateredAt: longAgo, lastCleanedAt: longAgo, health: 100, population: 10 });
-    const decayed = computeDecay(farm);
-    expect(decayed.health).toBe(90);
-    expect(decayed.population).toBe(9);
+  it('loses health at the critical rate when resources are starved', () => {
+    const now = Date.now();
+    const twoHoursAgo = now - 2 * 3600000;
+    // Fresh resource clocks but low levels, health clock 2h old.
+    const farm = makeFarm({
+      foodLevel: 10, waterLevel: 10, cleanliness: 10,
+      lastFedAt: now, lastWateredAt: now, lastCleanedAt: now,
+      lastTickAt: twoHoursAgo, health: 100, population: 10,
+    });
+    const decayed = computeDecay(farm, now);
+    expect(decayed.health).toBe(100 - 12 * 2); // -12/hr for 2h
+    expect(decayed.population).toBe(10); // health still >= 30, no decline
   });
 
-  it('keeps population at least 1', () => {
-    const longAgo = Date.now() - 100 * 3600000;
-    const farm = makeFarm({ lastFedAt: longAgo, lastWateredAt: longAgo, lastCleanedAt: longAgo, health: 1, population: 1 });
-    const decayed = computeDecay(farm);
-    expect(decayed.population).toBe(1);
+  it('gains health slowly when thriving', () => {
+    const now = Date.now();
+    const farm = makeFarm({
+      foodLevel: 90, waterLevel: 90, cleanliness: 90,
+      lastFedAt: now, lastWateredAt: now, lastCleanedAt: now,
+      lastTickAt: now - 2 * 3600000, health: 80,
+    });
+    const decayed = computeDecay(farm, now);
+    expect(decayed.health).toBe(80 + 3 * 2); // +3/hr for 2h
+  });
+
+  it('declines population only when health is critically low, keeping at least 1', () => {
+    const now = Date.now();
+    const farm = makeFarm({
+      foodLevel: 0, waterLevel: 0, cleanliness: 0,
+      lastFedAt: now, lastWateredAt: now, lastCleanedAt: now,
+      lastTickAt: now - 5 * 3600000, health: 20, population: 10,
+    });
+    const decayed = computeDecay(farm, now);
+    expect(decayed.health).toBe(0);
+    expect(decayed.population).toBe(5); // floor(10 * (1 - 0.1*5))
+  });
+
+  it('grows population toward the cap when the colony is thriving', () => {
+    const now = Date.now();
+    const farm = makeFarm({
+      foodLevel: 90, waterLevel: 90, cleanliness: 90,
+      lastFedAt: now, lastWateredAt: now, lastCleanedAt: now,
+      lastTickAt: now - 3 * 3600000, health: 90, population: 10,
+    });
+    const decayed = computeDecay(farm, now);
+    expect(decayed.population).toBeGreaterThan(10);
+    expect(decayed.population).toBeLessThanOrEqual(populationCap(farm));
+  });
+
+  it('never grows population past the cap', () => {
+    const now = Date.now();
+    const farm = makeFarm({
+      foodLevel: 100, waterLevel: 100, cleanliness: 100,
+      lastFedAt: now, lastWateredAt: now, lastCleanedAt: now,
+      lastTickAt: now - 1000 * 3600000, health: 100, population: 10,
+    });
+    const decayed = computeDecay(farm, now);
+    expect(decayed.population).toBeLessThanOrEqual(populationCap(farm));
+  });
+
+  it('is idempotent when persisted: decaying twice equals decaying once', () => {
+    const T = Date.now();
+    const start = T - 3 * 3600000; // 3h of accrued decay
+    const farm = makeFarm({
+      lastFedAt: start, lastWateredAt: start, lastCleanedAt: start, lastTickAt: start,
+    });
+    const once = computeDecay(farm, T);
+    // Persist the result, then run the tick again at the same instant.
+    const persisted = { ...farm, ...once };
+    const twice = computeDecay(persisted, T);
+    expect(twice.foodLevel).toBe(once.foodLevel);
+    expect(twice.waterLevel).toBe(once.waterLevel);
+    expect(twice.cleanliness).toBe(once.cleanliness);
+    expect(twice.health).toBe(once.health);
+  });
+});
+
+describe('populationCap', () => {
+  it('scales with chamber count and installed queen fertility', () => {
+    const base = makeFarm(); // 4 chambers, no queen
+    expect(populationCap(base)).toBe(4 * 15);
+    const withQueen = makeFarm({ queenFertility: 80 });
+    expect(populationCap(withQueen)).toBe(4 * 15 + 40);
   });
 });
 

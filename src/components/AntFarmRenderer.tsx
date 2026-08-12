@@ -108,11 +108,6 @@ export default function AntFarmRenderer({ farm, ants, width = 340, height = 300 
     });
   }, [farm.decorations, farm.size, width, height]);
 
-  const stats = useMemo(() => {
-    const { foodLevel, waterLevel, cleanliness } = farm;
-    return { foodLevel, waterLevel, cleanliness };
-  }, [farm.foodLevel, farm.waterLevel, farm.cleanliness]);
-
   return (
     <Svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
       <Defs>

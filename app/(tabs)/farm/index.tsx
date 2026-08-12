@@ -8,6 +8,8 @@ import { useFarm } from '../../../src/contexts/FarmContext';
 import AntFarmRenderer from '../../../src/components/AntFarmRenderer';
 import CatchQueenModal from '../../../src/components/CatchQueenModal';
 import { levelProgress } from '../../../src/game/progression';
+import { populationCap } from '../../../src/game/simulation';
+import { ANT_SPECIES } from '../../../src/constants/species';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function FarmScreen() {
@@ -41,21 +43,33 @@ export default function FarmScreen() {
     { label: 'Water', value: activeFarm.waterLevel, max: 100, color: Colors.water, icon: 'water' },
     { label: 'Clean', value: activeFarm.cleanliness, max: 100, color: Colors.cleanliness, icon: 'sparkles' },
     { label: 'Health', value: activeFarm.health, max: 100, color: Colors.health.good, icon: 'heart' },
-    { label: 'Pop', value: activeFarm.population, max: Math.max(100, activeFarm.population), color: Colors.ant, icon: 'bug' },
+    { label: 'Pop', value: activeFarm.population, max: populationCap(activeFarm), color: Colors.ant, icon: 'bug' },
   ];
+
+  const queenName = activeFarm.queenSpecies ? ANT_SPECIES[activeFarm.queenSpecies]?.name ?? activeFarm.queenSpecies : null;
 
   return (
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <Text style={styles.title}>{activeFarm.name}</Text>
         <View style={styles.headerRight}>
-          <TouchableOpacity style={styles.iconBtn} onPress={() => router.push('/(tabs)/farm/shop')}>
+          <TouchableOpacity
+            style={styles.iconBtn}
+            accessibilityRole="button"
+            accessibilityLabel="Open shop"
+            onPress={() => router.push('/(tabs)/farm/shop')}
+          >
             <Ionicons name="storefront" size={22} color={Colors.primary} />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.iconBtn} onPress={() => router.push('/(tabs)/farm/market')}>
+          <TouchableOpacity
+            style={styles.iconBtn}
+            accessibilityRole="button"
+            accessibilityLabel="Open market"
+            onPress={() => router.push('/(tabs)/farm/market')}
+          >
             <Ionicons name="swap-horizontal" size={22} color={Colors.primary} />
           </TouchableOpacity>
-          <View style={styles.balance}>
+          <View style={styles.balance} accessible accessibilityLabel={`${profile?.honeydew ?? 0} honeydew`}>
             <Ionicons name="leaf" size={18} color={Colors.accent} />
             <Text style={styles.balanceText}>{profile?.honeydew ?? 0}</Text>
           </View>
@@ -76,6 +90,9 @@ export default function FarmScreen() {
             <TouchableOpacity
               key={farm.id}
               style={[styles.farmChip, farm.id === activeFarm?.id && styles.farmChipActive]}
+              accessibilityRole="button"
+              accessibilityState={{ selected: farm.id === activeFarm?.id }}
+              accessibilityLabel={`Switch to colony ${farm.name}`}
               onPress={() => setActiveFarm(farm)}
             >
               <Ionicons name="leaf" size={14} color={farm.id === activeFarm?.id ? '#fff' : Colors.primary} />
@@ -86,6 +103,8 @@ export default function FarmScreen() {
           ))}
           <TouchableOpacity
             style={styles.farmChip}
+            accessibilityRole="button"
+            accessibilityLabel="Create a new colony"
             onPress={() => createNewFarm(`My Colony ${farms.length + 1}`)}
           >
             <Ionicons name="add" size={16} color={Colors.primary} />
@@ -114,24 +133,51 @@ export default function FarmScreen() {
           })}
         </View>
 
+        {queenName && (
+          <View style={styles.queenRow} accessible accessibilityLabel={`Resident queen: ${queenName}`}>
+            <Text style={styles.queenEmoji}>👑</Text>
+            <Text style={styles.queenText}>Resident queen: {queenName}</Text>
+          </View>
+        )}
+
         <Text style={styles.sectionTitle}>Daily Care</Text>
         <View style={styles.actionsRow}>
-          <TouchableOpacity style={styles.actionBtn} onPress={() => care('feed')}>
+          <TouchableOpacity
+            style={styles.actionBtn}
+            accessibilityRole="button"
+            accessibilityLabel="Feed the colony"
+            onPress={() => care('feed')}
+          >
             <Ionicons name="fast-food" size={28} color={Colors.food} />
             <Text style={styles.actionLabel}>Feed</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionBtn} onPress={() => care('water')}>
+          <TouchableOpacity
+            style={styles.actionBtn}
+            accessibilityRole="button"
+            accessibilityLabel="Water the colony"
+            onPress={() => care('water')}
+          >
             <Ionicons name="water" size={28} color={Colors.water} />
             <Text style={styles.actionLabel}>Water</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionBtn} onPress={() => care('clean')}>
+          <TouchableOpacity
+            style={styles.actionBtn}
+            accessibilityRole="button"
+            accessibilityLabel="Clean the colony"
+            onPress={() => care('clean')}
+          >
             <Ionicons name="sparkles" size={28} color={Colors.cleanliness} />
             <Text style={styles.actionLabel}>Clean</Text>
           </TouchableOpacity>
         </View>
 
         {(profile?.inventory ?? []).includes('supplies-test-tube') && user && (
-          <TouchableOpacity style={styles.catchBtn} onPress={() => setCatchVisible(true)}>
+          <TouchableOpacity
+            style={styles.catchBtn}
+            accessibilityRole="button"
+            accessibilityLabel="Catch a queen using a test tube"
+            onPress={() => setCatchVisible(true)}
+          >
             <Ionicons name="flask" size={22} color="#fff" />
             <Text style={styles.catchBtnText}>Catch a Queen (Test Tube)</Text>
           </TouchableOpacity>
@@ -180,6 +226,9 @@ const styles = StyleSheet.create({
   statBarBg: { flex: 1, height: 12, backgroundColor: Colors.ui.border, borderRadius: 6, overflow: 'hidden' },
   statBarFill: { height: '100%', borderRadius: 6 },
   statValue: { width: 30, fontSize: 12, color: Colors.ui.textSecondary, fontWeight: '500', textAlign: 'right' },
+  queenRow: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: Colors.ui.surface, borderRadius: 12, padding: 12, marginBottom: 16, borderWidth: 1, borderColor: Colors.ui.border },
+  queenEmoji: { fontSize: 18 },
+  queenText: { fontSize: 14, color: Colors.ui.text, fontWeight: '600' },
   sectionTitle: { fontSize: 18, fontWeight: '600', color: Colors.ui.text, marginBottom: 12 },
   actionsRow: { flexDirection: 'row', justifyContent: 'space-around', marginBottom: 32 },
   actionBtn: { backgroundColor: Colors.ui.surface, borderRadius: 16, padding: 16, alignItems: 'center', gap: 8, minWidth: 96, borderWidth: 1, borderColor: Colors.ui.border },

@@ -1,15 +1,8 @@
-import { ref, get, set, update, remove, push, query, orderByChild, equalTo } from 'firebase/database';
+import { ref, get, update, remove, push, query, orderByChild, equalTo } from 'firebase/database';
 import { db } from './firebase';
 import { AntFarm } from '../types';
 import { createDefaultFarm } from '../game/simulation';
-
-type TimeLike = number | string | undefined;
-
-function toEpoch(value: TimeLike): number {
-  if (typeof value === 'number') return value;
-  if (typeof value === 'string') return Date.parse(value);
-  return Date.now();
-}
+import { toEpoch } from './time';
 
 export function sanitizeFarm(farm: AntFarm): AntFarm {
   return {
@@ -18,6 +11,8 @@ export function sanitizeFarm(farm: AntFarm): AntFarm {
     lastFedAt: toEpoch(farm.lastFedAt),
     lastWateredAt: toEpoch(farm.lastWateredAt),
     lastCleanedAt: toEpoch(farm.lastCleanedAt),
+    // Legacy farms predate lastTickAt; seed it from createdAt so decay starts fresh.
+    lastTickAt: toEpoch(farm.lastTickAt ?? farm.createdAt),
   };
 }
 

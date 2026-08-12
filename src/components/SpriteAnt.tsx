@@ -36,10 +36,13 @@ export default function SpriteAnt({ ant, x, y, size }: Props) {
   }, [animation, anim.frame_ms, anim.frames, anim.loop]);
 
   const { col, row } = getFrame(meta, animation, frame);
-  const scale = size / meta.cell;
   const facing = ant.facing === 'left' ? -1 : 1;
+  // Subtle walk bob for active ants, derived from the frame we already animate
+  // (no extra timers or re-renders) so movement reads as alive without cost.
+  const isActive = animation === 'walk' || ant.state === 'moving' || ant.state === 'carrying';
+  const bob = isActive && anim.frames > 1 ? Math.sin((frame / anim.frames) * Math.PI * 2) * 1.2 : 0;
   const frameX = x - size / 2;
-  const frameY = y - size / 2;
+  const frameY = y - size / 2 + bob;
 
   return (
     <G>

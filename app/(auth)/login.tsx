@@ -80,7 +80,7 @@ export default function LoginScreen() {
       </View>
 
       <Link href="/(auth)/register" style={styles.link}>
-        <Text style={styles.linkText}>Don't have an account? Sign up</Text>
+        <Text style={styles.linkText}>Don&apos;t have an account? Sign up</Text>
       </Link>
     </View>
   );

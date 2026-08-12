@@ -76,9 +76,37 @@ npm test
 Covers the pure game logic: colony decay, care actions, ant simulation,
 leveling/XP, and the queen price formula.
 
-## Security note (intentional)
+## Deployment (Netlify)
 
-The Honeydew economy is enforced client-side — there are no Cloud Functions, so
-balances are not server-verified. This is accepted for this app. See
-`database.rules.json` and SETTING_UP_FIREBASE.md for the details and the path to
-hardening if you ever need it.
+The web app is a static Expo export, so it hosts cleanly on Netlify's free tier.
+`netlify.toml` is already configured:
+
+- **Build**: `npx expo export --platform web` → publishes `dist/`
+- **Routing**: a catch-all redirect to `index.html` (Expo Router is an SPA)
+
+Set the `EXPO_PUBLIC_FIREBASE_*` variables from `.env.example` in **Site settings
+→ Environment variables** so they're inlined at build time. Local dev is
+unchanged — keep using `npm run web`; to preview the production bundle locally,
+run `npm run build:web && npx serve dist`.
+
+## Security model
+
+This is a single-player colony sim on free infrastructure (Firebase Realtime
+Database, no server), so the design is:
+
+- **Balances are client-trusted.** With no server, a determined user could
+  inflate *their own* Honeydew. That only affects their own colony, so it's
+  accepted. All balance changes go through **atomic transactions / server-side
+  `increment()`** (`economyService`, `progressionService`) so concurrent care,
+  income, and purchases can never clobber each other.
+- **Other players are protected by rules.** `database.rules.json` restricts
+  every user to writing only their own record; the *one* cross-user exception is
+  that a buyer may **increase** a seller's Honeydew (market payout) and nothing
+  else, and balances can never go negative. Market purchases claim the listing
+  atomically so two buyers can't both win.
+- **Hardening path:** to make balances fully server-authoritative without
+  leaving the free tier, move the economy writes behind a **Netlify Function**
+  using the Firebase Admin SDK (which bypasses rules and can verify authority).
+  The client service layer is the only thing that would change.
+
+See `SETTING_UP_FIREBASE.md` for deploying the rules (`npm run rules:deploy`).

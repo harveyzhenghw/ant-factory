@@ -96,7 +96,8 @@ runs.
 1. In the Firebase console open **Project settings → Your apps → ant-factory-web
    (Web)** → **Authorized JavaScript origins** → **Add domain**.
 2. Add `http://localhost:8081` (the Expo dev server) so it works locally.
-   When you deploy a static build to a real host, add that domain too.
+   When you deploy a static build to a real host, add that domain too — e.g.
+   your Netlify URL `https://<your-site>.netlify.app` (see README → Deployment).
 
 ## 8. Verify
 
@@ -124,8 +125,22 @@ runs.
 - **Sign-in button does nothing / hanging** — hard-refresh the browser and make
   sure the Metro server was started with `--clear`.
 
-## Security note (intentional)
+## Testing the security rules
 
-The Honeydew economy is enforced client-side: there are no Cloud Functions, so
-a determined user could edit their own balance. This is acceptable for this
-app; see the `TODO(market)` comment in `src/services/economyService.ts`.
+The rules are covered by emulator tests (`__tests__/rules/`). They need the
+Firebase RTDB emulator, which requires Java:
+
+```bash
+npm run test:rules   # boots the emulator and runs the rules tests
+```
+
+## Security note
+
+The Honeydew economy is **client-trusted**: with no server, a determined user
+could inflate *their own* balance (which only affects their own colony). What
+the rules enforce is that **no one can tamper with another player's record**
+beyond paying them for a market sale, and balances can't go negative. All
+balance changes use atomic transactions/increments so concurrent writes never
+corrupt each other. To make balances fully server-authoritative on the free
+tier, move the economy writes behind a Netlify Function using the Firebase Admin
+SDK — see the README "Security model" section.

@@ -1,10 +1,31 @@
-import { AntFarm, Chamber, Tunnel, Ant } from '../types';
+import { AntFarm, Ant } from '../types';
 
 const DECAY_PER_HOUR = {
   food: 5,
   water: 4,
   cleanliness: 2,
 };
+
+// Health drifts based on how well-resourced the colony is, expressed as points
+// per hour so the outcome is independent of how often the decay tick runs.
+const HEALTH_PER_HOUR = {
+  critical: -12, // avg resources < 20
+  low: -5, // avg resources < 40
+  thriving: 3, // avg resources > 80
+};
+
+// Population grows toward its cap while the colony is healthy, and only shrinks
+// while it is in poor health — so good care is rewarded, not just damage control.
+const POP_DECLINE_PER_HOUR = 0.1; // fraction lost per hour when health < 30
+const POP_GROWTH_PER_HOUR = 0.2; // approach rate toward the cap when thriving
+const CHAMBER_CAPACITY = 15; // population supported per chamber
+
+/** Max population a farm can sustain: its chambers plus an installed queen's fertility. */
+export function populationCap(farm: AntFarm): number {
+  const chambers = farm.chambers?.length ?? 4;
+  const queenBonus = farm.queenFertility ? Math.round(farm.queenFertility * 0.5) : 0;
+  return chambers * CHAMBER_CAPACITY + queenBonus;
+}
 
 const CARE_RESTORE = {
   feed: { food: 35, health: 5 },
@@ -22,6 +43,7 @@ export function createDefaultFarm(userId: string, name: string): AntFarm {
     lastFedAt: now,
     lastWateredAt: now,
     lastCleanedAt: now,
+    lastTickAt: now,
     health: 100,
     population: 10,
     foodLevel: 80,
@@ -56,41 +78,70 @@ export function createDefaultFarm(userId: string, name: string): AntFarm {
   };
 }
 
-export function computeDecay(farm: AntFarm): Partial<AntFarm> {
-  const now = Date.now();
-  const hoursSinceFeed = (now - farm.lastFedAt) / 3600000;
-  const hoursSinceWater = (now - farm.lastWateredAt) / 3600000;
-  const hoursSinceClean = (now - farm.lastCleanedAt) / 3600000;
+/**
+ * Compute the colony's decayed state. This is idempotent when persisted: it
+ * advances each resource clock by exactly the whole units of decay it applied
+ * (and moves `lastTickAt` to now), so re-running it on the persisted result
+ * produces no further decay until real time passes. Applying it repeatedly
+ * without persisting is also safe — it always measures from the stored clocks.
+ */
+export function computeDecay(farm: AntFarm, now: number = Date.now()): Partial<AntFarm> {
+  const lastTickAt = farm.lastTickAt ?? farm.createdAt ?? now;
 
-  const foodDecay = Math.floor(hoursSinceFeed * DECAY_PER_HOUR.food);
-  const waterDecay = Math.floor(hoursSinceWater * DECAY_PER_HOUR.water);
-  const cleanDecay = Math.floor(hoursSinceClean * DECAY_PER_HOUR.cleanliness);
+  const decayResource = (
+    level: number,
+    lastAt: number,
+    ratePerHour: number
+  ): { level: number; lastAt: number } => {
+    const hours = Math.max(0, now - lastAt) / 3600000;
+    const dropped = Math.floor(hours * ratePerHour);
+    if (dropped <= 0) return { level, lastAt };
+    // Advance the clock only by the time represented by the whole units we
+    // consumed, so the sub-unit remainder carries into the next call.
+    return {
+      level: Math.max(0, level - dropped),
+      lastAt: lastAt + (dropped / ratePerHour) * 3600000,
+    };
+  };
 
-  const newFood = Math.max(0, farm.foodLevel - foodDecay);
-  const newWater = Math.max(0, farm.waterLevel - waterDecay);
-  const newClean = Math.max(0, farm.cleanliness - cleanDecay);
+  const food = decayResource(farm.foodLevel, farm.lastFedAt, DECAY_PER_HOUR.food);
+  const water = decayResource(farm.waterLevel, farm.lastWateredAt, DECAY_PER_HOUR.water);
+  const clean = decayResource(farm.cleanliness, farm.lastCleanedAt, DECAY_PER_HOUR.cleanliness);
 
-  const avg = (newFood + newWater + newClean) / 3;
-  let newHealth: number;
-  if (avg < 20) {
-    newHealth = Math.max(0, farm.health - 10);
-  } else if (avg < 40) {
-    newHealth = Math.max(0, farm.health - 4);
-  } else if (avg > 80) {
-    newHealth = Math.min(100, farm.health + 2);
-  } else {
-    newHealth = farm.health;
+  const elapsedHours = Math.max(0, now - lastTickAt) / 3600000;
+  const avg = (food.level + water.level + clean.level) / 3;
+
+  let healthRate = 0;
+  if (avg < 20) healthRate = HEALTH_PER_HOUR.critical;
+  else if (avg < 40) healthRate = HEALTH_PER_HOUR.low;
+  else if (avg > 80) healthRate = HEALTH_PER_HOUR.thriving;
+
+  const newHealth = Math.min(100, Math.max(0, farm.health + healthRate * elapsedHours));
+
+  // Population is kept as a float so slow per-tick growth accumulates instead of
+  // being floored away; callers floor it for display and ant simulation.
+  const cap = populationCap(farm);
+  let newPopulation = farm.population;
+  if (newHealth < 30) {
+    newPopulation = Math.max(1, farm.population * (1 - POP_DECLINE_PER_HOUR * elapsedHours));
+  } else if (newHealth >= 60 && avg >= 40 && farm.population < cap) {
+    // Exponential approach to the cap: fast when far below, tapering near it.
+    newPopulation = Math.min(
+      cap,
+      farm.population + (cap - farm.population) * (1 - Math.exp(-POP_GROWTH_PER_HOUR * elapsedHours))
+    );
   }
 
-  const popMultiplier = newHealth / 100;
-  const newPopulation = Math.max(0, Math.floor(farm.population * popMultiplier));
-
   return {
-    foodLevel: newFood,
-    waterLevel: newWater,
-    cleanliness: newClean,
+    foodLevel: food.level,
+    waterLevel: water.level,
+    cleanliness: clean.level,
+    lastFedAt: food.lastAt,
+    lastWateredAt: water.lastAt,
+    lastCleanedAt: clean.lastAt,
+    lastTickAt: now,
     health: newHealth,
-    population: newPopulation || 1,
+    population: newPopulation,
   };
 }
 

@@ -31,11 +31,15 @@
     "react-native-worklets": "^0.10.1"
   },
   "devDependencies": {
+    "@firebase/rules-unit-testing": "^5.0.1",
     "@types/jest": "~29.5.14",
     "@types/react": "~19.2.2",
+    "eslint": "^9.18.0",
+    "eslint-config-expo": "~9.2.0",
     "firebase-tools": "^13.30.0",
     "jest": "^29.7.0",
     "jest-expo": "~57.0.4",
+    "prettier": "^3.4.2",
     "typescript": "~6.0.3"
   },
   "scripts": {
@@ -44,7 +48,10 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "format": "prettier --check .",
     "test": "jest",
+    "test:rules": "firebase emulators:exec --only database \"jest --config jest.rules.config.js\"",
     "doctor": "expo install --check",
     "build:web": "expo export --platform web",
     "rules:deploy": "firebase deploy --only database:rules,storage:rules"
@@ -53,7 +60,8 @@
     "preset": "jest-expo",
     "testPathIgnorePatterns": [
       "/node_modules/",
-      "/dist/"
+      "/dist/",
+      "/__tests__/rules/"
     ]
   },
   "private": true

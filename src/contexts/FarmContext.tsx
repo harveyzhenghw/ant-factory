@@ -1,16 +1,22 @@
 import { createContext, useContext, useEffect, useState, useCallback, useRef, ReactNode } from 'react';
 import { ref, onValue } from 'firebase/database';
 import { db } from '../services/firebase';
-import { AntFarm, Ant } from '../types';
+import { AntFarm, Ant, Queen } from '../types';
 import { getUserFarms, createFarm, updateFarm, sanitizeFarm } from '../services/farmService';
 import { computeDecay, applyCare, simulateAnts } from '../game/simulation';
 import { applyXp } from '../services/progressionService';
 import { addHoneydew } from '../services/economyService';
+import { updateQueen } from '../services/queenService';
 import { useAuth } from './AuthContext';
 
 const TICK_INTERVAL = 30000;
 const XP_PER_CARE = 10;
 const HONEYDEW_PER_CARE = 5;
+// Honeydew per hour = (population × health%) × this factor. Elapsed-based so the
+// payout is independent of the tick rate.
+const INCOME_PER_HOUR = 8;
+// Cap "offline" earnings so a long absence (or a fiddled clock) can't mint a fortune.
+const MAX_OFFLINE_HOURS = 24;
 
 interface FarmContextValue {
   farms: AntFarm[];
@@ -21,6 +27,7 @@ interface FarmContextValue {
   care: (action: 'feed' | 'water' | 'clean') => Promise<void>;
   createNewFarm: (name: string) => Promise<AntFarm | undefined>;
   setActiveFarm: (farm: AntFarm) => void;
+  installQueen: (queen: Queen) => Promise<void>;
 }
 
 const FarmContext = createContext<FarmContextValue>({
@@ -32,6 +39,7 @@ const FarmContext = createContext<FarmContextValue>({
   care: async () => {},
   createNewFarm: async () => undefined,
   setActiveFarm: () => {},
+  installQueen: async () => {},
 });
 
 export function FarmProvider({ children }: { children: ReactNode }) {
@@ -71,11 +79,12 @@ export function FarmProvider({ children }: { children: ReactNode }) {
 
     const unsub = onValue(ref(db, `farms/${activeFarm.id}`), (snap) => {
       if (!snap.exists()) return;
+      // Store the raw persisted state as the single source of truth. Decay is
+      // derived for display and persisted by the tick loop (which advances the
+      // resource clocks), so we must not pre-apply it here or it double-counts.
       const data = sanitizeFarm({ ...(snap.val() as AntFarm), id: snap.key as string });
-      const decayed = computeDecay(data);
-      const updated = { ...data, ...decayed };
-      setActiveFarm(updated);
-      setAnts(simulateAnts(updated));
+      setActiveFarm(data);
+      setAnts(simulateAnts({ ...data, ...computeDecay(data) }));
     });
 
     return unsub;
@@ -94,7 +103,9 @@ export function FarmProvider({ children }: { children: ReactNode }) {
   const decayLoop = useCallback(async () => {
     const farm = farmRef.current;
     if (!farm?.id || !userId) return;
-    const decayed = computeDecay(farm);
+    const now = Date.now();
+    const elapsedHours = Math.min(MAX_OFFLINE_HOURS, Math.max(0, now - farm.lastTickAt) / 3600000);
+    const decayed = computeDecay(farm, now);
     const changed =
       decayed.foodLevel !== farm.foodLevel ||
       decayed.waterLevel !== farm.waterLevel ||
@@ -102,9 +113,11 @@ export function FarmProvider({ children }: { children: ReactNode }) {
       decayed.health !== farm.health ||
       decayed.population !== farm.population;
     if (changed) {
+      // Persist the advanced resource clocks alongside the levels so the next
+      // tick measures from here instead of re-applying the same decay.
       await updateFarm(farm.id, decayed);
     }
-    const income = Math.max(0, Math.floor((farm.population * farm.health) / 1000));
+    const income = Math.floor(farm.population * (farm.health / 100) * INCOME_PER_HOUR * elapsedHours);
     if (income > 0) {
       await addHoneydew(userId, income);
       refreshProfile();
@@ -113,6 +126,9 @@ export function FarmProvider({ children }: { children: ReactNode }) {
   }, [userId, refreshProfile]);
 
   useEffect(() => {
+    // Run once immediately so a returning player sees up-to-date decay without
+    // waiting a full tick, then on the interval.
+    decayLoop();
     tickRef.current = setInterval(decayLoop, TICK_INTERVAL);
     return () => {
       if (tickRef.current) clearInterval(tickRef.current);
@@ -127,8 +143,19 @@ export function FarmProvider({ children }: { children: ReactNode }) {
     return farm;
   }, [userId]);
 
+  const installQueen = useCallback(async (queen: Queen) => {
+    const farm = farmRef.current;
+    if (!farm?.id) return;
+    await updateFarm(farm.id, {
+      queenId: queen.id,
+      queenSpecies: queen.species,
+      queenFertility: queen.fertility,
+    });
+    await updateQueen(queen.id, { installedFarmId: farm.id, forSale: false });
+  }, []);
+
   return (
-    <FarmContext.Provider value={{ farms, activeFarm, ants, loading, error, care, createNewFarm, setActiveFarm }}>
+    <FarmContext.Provider value={{ farms, activeFarm, ants, loading, error, care, createNewFarm, setActiveFarm, installQueen }}>
       {children}
     </FarmContext.Provider>
   );

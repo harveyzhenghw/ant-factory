@@ -4,12 +4,7 @@ import {
 } from 'firebase/database';
 import { db } from './firebase';
 import { CommunityPost, Comment, Notification } from '../types';
-
-function toEpoch(value: unknown): number {
-  if (typeof value === 'number') return value;
-  if (typeof value === 'string') return Date.parse(value);
-  return Date.now();
-}
+import { toEpoch } from './time';
 
 function sanitizePost(post: CommunityPost): CommunityPost {
   return { ...post, createdAt: toEpoch(post.createdAt) };

@@ -8,7 +8,7 @@ export default function NotFoundScreen() {
     <View style={styles.container}>
       <Ionicons name="bug-outline" size={64} color={Colors.primary} />
       <Text style={styles.title}>Page not found</Text>
-      <Text style={styles.message}>The page you're looking for doesn't exist.</Text>
+      <Text style={styles.message}>The page you&apos;re looking for doesn&apos;t exist.</Text>
       <TouchableOpacity style={styles.button} onPress={() => router.replace('/')}>
         <Text style={styles.buttonText}>Back to Farm</Text>
       </TouchableOpacity>

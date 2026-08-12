@@ -6,6 +6,7 @@ import { Colors } from '../constants/colors';
 import { ANT_SPECIES } from '../constants/species';
 import { addQueen } from '../services/queenService';
 import { removeItemFromInventory, applyXp } from '../services/progressionService';
+import { useFarm } from '../contexts/FarmContext';
 
 interface Props {
   visible: boolean;
@@ -15,6 +16,7 @@ interface Props {
 }
 
 interface CatchResult {
+  id: string;
   species: string;
   health: number;
   fertility: number;
@@ -37,6 +39,7 @@ function randomSpecies(): string {
 }
 
 export default function CatchQueenModal({ visible, userId, onClose, onProgress }: Props) {
+  const { installQueen } = useFarm();
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<CatchResult | null>(null);
 
@@ -47,10 +50,10 @@ export default function CatchQueenModal({ visible, userId, onClose, onProgress }
       const species = randomSpecies();
       const health = Math.floor(50 + Math.random() * 50);
       const fertility = Math.floor(40 + Math.random() * 60);
-      await addQueen(userId, species, health, fertility);
+      const id = await addQueen(userId, species, health, fertility);
       await removeItemFromInventory(userId, 'supplies-test-tube');
       await applyXp(userId, 25);
-      setResult({ species, health, fertility });
+      setResult({ id, species, health, fertility });
       onProgress();
     } catch (e: any) {
       Alert.alert('Error', e.message ?? 'Could not go on the flight.');
@@ -62,6 +65,19 @@ export default function CatchQueenModal({ visible, userId, onClose, onProgress }
   const handleDone = () => {
     setResult(null);
     onClose();
+  };
+
+  const handleInstall = async () => {
+    if (!result) return;
+    try {
+      await installQueen({
+        id: result.id, userId, species: result.species,
+        health: result.health, fertility: result.fertility, forSale: false, price: 0,
+      });
+      handleDone();
+    } catch (e: any) {
+      Alert.alert('Error', e.message ?? 'Could not add the queen to your colony.');
+    }
   };
 
   const handleSell = () => {
@@ -80,8 +96,11 @@ export default function CatchQueenModal({ visible, userId, onClose, onProgress }
               <Text style={styles.title}>You caught a queen!</Text>
               <Text style={styles.species}>{ANT_SPECIES[result.species]?.name ?? result.species}</Text>
               <Text style={styles.subtitle}>Health {result.health} · Fertility {result.fertility}</Text>
-              <TouchableOpacity style={styles.button} onPress={handleSell}>
-                <Text style={styles.buttonText}>List on Market</Text>
+              <TouchableOpacity style={styles.button} onPress={handleInstall}>
+                <Text style={styles.buttonText}>Add to this Colony</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.secondary} onPress={handleSell}>
+                <Text style={styles.secondaryText}>List on Market instead</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.secondary} onPress={handleDone}>
                 <Text style={styles.secondaryText}>Done</Text>

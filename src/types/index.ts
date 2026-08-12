@@ -19,6 +19,8 @@ export interface AntFarm {
   lastFedAt: number;
   lastWateredAt: number;
   lastCleanedAt: number;
+  /** Clock for time-integrated health/population changes; advanced every decay tick. */
+  lastTickAt: number;
   health: number;
   population: number;
   foodLevel: number;
@@ -28,6 +30,10 @@ export interface AntFarm {
   chambers: Chamber[];
   tunnels: Tunnel[];
   decorations: Decoration[];
+  /** An installed queen raises the colony's population cap and growth. */
+  queenId?: string;
+  queenSpecies?: string;
+  queenFertility?: number;
 }
 
 export interface Chamber {
@@ -69,6 +75,8 @@ export interface Queen {
   fertility: number;
   forSale: boolean;
   price: number;
+  /** Set when the queen has been installed into one of the owner's farms. */
+  installedFarmId?: string;
 }
 
 export interface ShopItem {
