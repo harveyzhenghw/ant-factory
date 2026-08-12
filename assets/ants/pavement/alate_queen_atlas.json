@@ -1,0 +1,44 @@
+{
+  "caste": "alate_queen",
+  "cell": 128,
+  "facing": "right",
+  "ground_line_y": 113.0,
+  "note": "flip horizontally for left-facing; pivot = cell centre",
+  "animations": {
+    "idle": {
+      "frames": 4,
+      "row": 0,
+      "frame_ms": 130,
+      "loop": true
+    },
+    "walk": {
+      "frames": 6,
+      "row": 1,
+      "frame_ms": 90,
+      "loop": true
+    },
+    "wing_flutter": {
+      "frames": 6,
+      "row": 2,
+      "frame_ms": 50,
+      "loop": true
+    },
+    "launch": {
+      "frames": 6,
+      "row": 3,
+      "frame_ms": 60,
+      "loop": false
+    },
+    "wing_shed": {
+      "frames": 4,
+      "row": 4,
+      "frame_ms": 110,
+      "loop": false
+    }
+  },
+  "atlas": {
+    "file": "alate_queen_atlas.png",
+    "cols": 6,
+    "rows": 5
+  }
+}

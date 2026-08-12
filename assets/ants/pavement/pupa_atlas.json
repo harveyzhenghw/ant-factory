@@ -1,0 +1,38 @@
+{
+  "caste": "pupa",
+  "cell": 128,
+  "facing": "right",
+  "ground_line_y": 111.0,
+  "note": "flip horizontally for left-facing; pivot = cell centre",
+  "animations": {
+    "idle": {
+      "frames": 2,
+      "row": 0,
+      "frame_ms": 420,
+      "loop": true
+    },
+    "eclosion": {
+      "frames": 12,
+      "row": 1,
+      "frame_ms": 110,
+      "loop": false
+    },
+    "dead": {
+      "frames": 1,
+      "row": 2,
+      "frame_ms": 0,
+      "loop": false
+    },
+    "husk": {
+      "frames": 1,
+      "row": 3,
+      "frame_ms": 0,
+      "loop": false
+    }
+  },
+  "atlas": {
+    "file": "pupa_atlas.png",
+    "cols": 12,
+    "rows": 4
+  }
+}

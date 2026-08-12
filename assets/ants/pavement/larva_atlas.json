@@ -1,0 +1,38 @@
+{
+  "caste": "larva",
+  "cell": 128,
+  "facing": "right",
+  "ground_line_y": 111.0,
+  "note": "flip horizontally for left-facing; pivot = cell centre",
+  "animations": {
+    "idle": {
+      "frames": 4,
+      "row": 0,
+      "frame_ms": 180,
+      "loop": true
+    },
+    "feed": {
+      "frames": 6,
+      "row": 1,
+      "frame_ms": 130,
+      "loop": true
+    },
+    "squirm": {
+      "frames": 6,
+      "row": 2,
+      "frame_ms": 90,
+      "loop": true
+    },
+    "dead": {
+      "frames": 1,
+      "row": 3,
+      "frame_ms": 0,
+      "loop": false
+    }
+  },
+  "atlas": {
+    "file": "larva_atlas.png",
+    "cols": 6,
+    "rows": 4
+  }
+}

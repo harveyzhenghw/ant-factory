@@ -1,0 +1,56 @@
+{
+  "rules": {
+    "users": {
+      "$uid": {
+        ".read": "auth != null && auth.uid == $uid",
+        ".write": "auth != null && (auth.uid == $uid || (data.exists() && newData.exists() && newData.child('honeydew').val() >= data.child('honeydew').val()))"
+      }
+    },
+    "farms": {
+      ".indexOn": ["userId"],
+      "$farmId": {
+        ".read": "auth != null && data.child('userId').val() == auth.uid",
+        ".write": "auth != null && (newData.child('userId').val() == auth.uid || data.child('userId').val() == auth.uid)"
+      }
+    },
+    "queens": {
+      ".indexOn": ["userId"],
+      "$queenId": {
+        ".read": "auth != null && (data.child('userId').val() == auth.uid || data.child('forSale').val() == true)",
+        ".write": "auth != null && (newData.child('userId').val() == auth.uid || data.child('userId').val() == auth.uid)"
+      }
+    },
+    "marketListings": {
+      ".indexOn": ["createdAt"],
+      "$listingId": {
+        ".read": "auth != null",
+        ".write": "auth != null && (newData.child('sellerId').val() == auth.uid || data.child('sellerId').val() == auth.uid)"
+      }
+    },
+    "communityPosts": {
+      ".indexOn": ["createdAt"],
+      "$postId": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    },
+    "comments": {
+      "$postId": {
+        ".indexOn": ["createdAt"],
+        "$commentId": {
+          ".read": "auth != null",
+          ".write": "auth != null && (newData.child('userId').val() == auth.uid || data.child('userId').val() == auth.uid)"
+        }
+      }
+    },
+    "notifications": {
+      "$userId": {
+        ".indexOn": ["createdAt"],
+        "$notificationId": {
+          ".read": "auth != null && auth.uid == $userId",
+          ".write": "auth != null && (auth.uid == $userId || newData.child('userId').val() == auth.uid)"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "caste": "drone",
+  "cell": 128,
+  "facing": "right",
+  "ground_line_y": 111.0,
+  "note": "flip horizontally for left-facing; pivot = cell centre",
+  "animations": {
+    "idle": {
+      "frames": 4,
+      "row": 0,
+      "frame_ms": 120,
+      "loop": true
+    },
+    "walk": {
+      "frames": 6,
+      "row": 1,
+      "frame_ms": 75,
+      "loop": true
+    },
+    "wing_flutter": {
+      "frames": 4,
+      "row": 2,
+      "frame_ms": 45,
+      "loop": true
+    },
+    "death": {
+      "frames": 4,
+      "row": 3,
+      "frame_ms": 90,
+      "loop": false
+    }
+  },
+  "atlas": {
+    "file": "drone_atlas.png",
+    "cols": 6,
+    "rows": 4
+  }
+}

@@ -1,0 +1,62 @@
+{
+  "caste": "queen",
+  "cell": 128,
+  "facing": "right",
+  "ground_line_y": 113.0,
+  "note": "flip horizontally for left-facing; pivot = cell centre",
+  "animations": {
+    "idle": {
+      "frames": 4,
+      "row": 0,
+      "frame_ms": 130,
+      "loop": true
+    },
+    "walk": {
+      "frames": 8,
+      "row": 1,
+      "frame_ms": 90,
+      "loop": true
+    },
+    "lay_egg": {
+      "frames": 8,
+      "row": 2,
+      "frame_ms": 130,
+      "loop": false
+    },
+    "groom": {
+      "frames": 4,
+      "row": 3,
+      "frame_ms": 150,
+      "loop": true
+    },
+    "sleep": {
+      "frames": 4,
+      "row": 4,
+      "frame_ms": 280,
+      "loop": true
+    },
+    "death": {
+      "frames": 8,
+      "row": 5,
+      "frame_ms": 80,
+      "loop": false
+    },
+    "corpse": {
+      "frames": 1,
+      "row": 6,
+      "frame_ms": 0,
+      "loop": false
+    },
+    "dead_onback": {
+      "frames": 1,
+      "row": 7,
+      "frame_ms": 0,
+      "loop": false
+    }
+  },
+  "atlas": {
+    "file": "queen_atlas.png",
+    "cols": 8,
+    "rows": 8
+  }
+}

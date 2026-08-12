@@ -3,6 +3,7 @@
     "name": "ant-factory",
     "slug": "ant-factory",
     "version": "1.0.0",
+    "scheme": "ant-factory",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -19,7 +20,26 @@
       "predictiveBackGestureEnabled": false
     },
     "web": {
-      "favicon": "./assets/favicon.png"
-    }
+      "bundler": "metro",
+      "favicon": "./assets/favicon.png",
+      "name": "Ant Factory",
+      "shortName": "Ant Factory",
+      "description": "Build and care for your virtual ant colony.",
+      "themeColor": "#FFF8E1",
+      "backgroundColor": "#FFF8E1"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-status-bar",
+      "expo-web-browser",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow Ant Factory to access your photos so you can share your farm."
+        }
+      ],
+      "expo-font",
+      "expo-asset"
+    ]
   }
 }
