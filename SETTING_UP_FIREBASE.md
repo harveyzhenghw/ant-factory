@@ -8,7 +8,7 @@ is available on Firebase's free tier (Spark plan) with no credit card.
 > database requires enabling billing on the project, which needs a credit card.
 > Realtime Database has the same free tier but can be created without billing.
 
-> **Right now your `.env` is only partially filled.** Without all six
+> **Right now your `.env` is only partially filled.** Without all seven
 > `EXPO_PUBLIC_FIREBASE_*` values the app shows a "Firebase is not configured"
 > screen instead of crashing. Follow this guide to fill it in completely.
 
@@ -113,7 +113,7 @@ runs.
 
 ## Troubleshooting
 
-- **"Firebase is not configured" screen** — one of the six `EXPO_PUBLIC_FIREBASE_*`
+- **"Firebase is not configured" screen** — one of the seven `EXPO_PUBLIC_FIREBASE_*`
   values in `.env` is missing/empty. Check step 2.
 - **`auth/invalid-api-key` in the browser console** — `EXPO_PUBLIC_FIREBASE_API_KEY`
   is empty. Fill it and restart with `--clear`.

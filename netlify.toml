@@ -11,7 +11,7 @@
   publish = "dist"
 
 [build.environment]
-  NODE_VERSION = "20"
+  NODE_VERSION = "22.13.0"
 
 # Expo Router web is a single-page app: route every path to the SPA shell so
 # deep links / refreshes don't 404.

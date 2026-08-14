@@ -13,22 +13,22 @@ const firebaseConfig = {
   appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
 };
 
-const REQUIRED_CONFIG: { key: string; label: string }[] = [
-  { key: 'EXPO_PUBLIC_FIREBASE_API_KEY', label: 'Web API Key' },
-  { key: 'EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN', label: 'Auth Domain' },
-  { key: 'EXPO_PUBLIC_FIREBASE_DATABASE_URL', label: 'Database URL' },
-  { key: 'EXPO_PUBLIC_FIREBASE_PROJECT_ID', label: 'Project ID' },
-  { key: 'EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET', label: 'Storage Bucket' },
-  { key: 'EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID', label: 'Messaging Sender ID' },
-  { key: 'EXPO_PUBLIC_FIREBASE_APP_ID', label: 'App ID' },
+const REQUIRED_CONFIG: { value: string | undefined; label: string }[] = [
+  { value: firebaseConfig.apiKey, label: 'Web API Key' },
+  { value: firebaseConfig.authDomain, label: 'Auth Domain' },
+  { value: firebaseConfig.databaseURL, label: 'Database URL' },
+  { value: firebaseConfig.projectId, label: 'Project ID' },
+  { value: firebaseConfig.storageBucket, label: 'Storage Bucket' },
+  { value: firebaseConfig.messagingSenderId, label: 'Messaging Sender ID' },
+  { value: firebaseConfig.appId, label: 'App ID' },
 ];
 
 export function getFirebaseConfigError(): string | null {
   const missing = REQUIRED_CONFIG
-    .filter(({ key }) => !process.env[key])
+    .filter(({ value }) => !value)
     .map(({ label }) => label);
   return missing.length > 0
-    ? `Firebase is missing config: ${missing.join(', ')}. Copy .env.example to .env and fill in the values from the Firebase console (see SETTING_UP_FIREBASE.md).`
+    ? `Firebase is missing config: ${missing.join(', ')}. Set the values from the Firebase console in .env locally or in your deployment environment, then rebuild (see SETTING_UP_FIREBASE.md).`
     : null;
 }
 
