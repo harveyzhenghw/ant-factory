@@ -87,7 +87,7 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.ui.background, justifyContent: 'center', padding: 24 },
+  container: { flex: 1, backgroundColor: Colors.ui.background, justifyContent: 'center', padding: 24, maxWidth: 400, alignSelf: 'center', width: '100%' },
   title: { fontSize: 36, fontWeight: 'bold', color: Colors.primary, textAlign: 'center', marginBottom: 4 },
   subtitle: { fontSize: 16, color: Colors.ui.textSecondary, textAlign: 'center', marginBottom: 48 },
   form: { gap: 16 },

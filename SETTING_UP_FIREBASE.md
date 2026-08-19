@@ -90,14 +90,28 @@ This applies the Realtime Database rules and the Storage rules.
 
 ## 7. Configure Google Sign-In for web
 
-Google sign-in needs an **Authorized JavaScript origin** matching where the app
-runs.
+`expo-auth-session` sends Google OAuth requests with
+`redirect_uri` set to the origin the app is running from (e.g.
+`http://localhost:8081`), so Google needs **both** an **Authorized JavaScript
+origin** and an **Authorized redirect URI** matching that origin.
 
-1. In the Firebase console open **Project settings → Your apps → ant-factory-web
-   (Web)** → **Authorized JavaScript origins** → **Add domain**.
-2. Add `http://localhost:8081` (the Expo dev server) so it works locally.
-   When you deploy a static build to a real host, add that domain too — e.g.
-   your Netlify URL `https://<your-site>.netlify.app` (see README → Deployment).
+1. Open the Google Cloud Console → **APIs & Services → Credentials**:
+   https://console.cloud.google.com/apis/credentials (this is the *Google Cloud*
+   console, not the Firebase console — the redirect URI can't be added from
+   Firebase).
+2. Under **OAuth 2.0 Client IDs**, click the **Web** client (it has the same
+   client ID as `EXPO_PUBLIC_GOOGLE_CLIENT_ID_WEB` in `.env`).
+3. Add `http://localhost:8081` (the Expo dev server) to **both**:
+   - **Authorized JavaScript origins**
+   - **Authorized redirect URIs**
+4. Click **Save**.
+5. When you deploy a static build to a real host, add that domain to both
+   lists too — e.g. your Netlify URL `https://<your-site>.netlify.app`
+   (see README → Deployment).
+
+> If you change the port (`expo start --port 19006`) or open the app from a
+> LAN IP (`http://192.168.x.x:8081`), the redirect URI changes — add that exact
+> origin to the redirect URI list as well.
 
 ## 8. Verify
 
@@ -117,6 +131,12 @@ runs.
   values in `.env` is missing/empty. Check step 2.
 - **`auth/invalid-api-key` in the browser console** — `EXPO_PUBLIC_FIREBASE_API_KEY`
   is empty. Fill it and restart with `--clear`.
+- **Google button pops "Access blocked: This app's request is invalid" with
+  `Error 400: redirect_uri_mismatch`** — the redirect URI the app sends
+  (e.g. `http://localhost:8081`) isn't registered on the **Web** OAuth client.
+  In the Google Cloud Console → Credentials, add `http://localhost:8081` to
+  **Authorized redirect URIs** (and **Authorized JavaScript origins**) and
+  restart the dev server with `--clear` (step 7).
 - **Google button does nothing / pops an error** — `EXPO_PUBLIC_GOOGLE_CLIENT_ID_WEB`
   is empty or the localhost origin isn't authorized (step 7).
 - **Realtime Database permission errors on the farm screen** — the project is
