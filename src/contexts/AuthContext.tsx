@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState, ReactNode, useCallback 
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { auth, getFirebaseConfigError } from '../services/firebase';
 import { UserProfile } from '../types';
-import { getUserProfile } from '../services/auth';
+import { getUserProfile, ensureUserProfile } from '../services/auth';
 
 interface AuthState {
   user: User | null;
@@ -43,13 +43,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    const unsub = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        const profile = await getUserProfile(user);
-        setState({ user, profile, loading: false, configError: null, refreshProfile });
-      } else {
+    const unsub = onAuthStateChanged(auth, (user) => {
+      if (!user) {
         setState({ user: null, profile: null, loading: false, configError: null, refreshProfile });
+        return;
       }
+
+      // Render the app as soon as auth is known. Do NOT block the loading
+      // spinner on the profile read: a slow/failed Realtime Database request
+      // (wrong region, denied rules, offline) must not hang the whole app.
+      setState({ user, profile: null, loading: false, configError: null, refreshProfile });
+
+      // Read the profile, self-healing a missing record so every signed-in
+      // account always ends up with one (covers the Google-signup race).
+      ensureUserProfile(user)
+        .then((profile) => {
+          setState((prev) => (prev.user?.uid === user.uid ? { ...prev, profile } : prev));
+        })
+        .catch((e) => {
+          console.warn('Failed to load user profile', e);
+        });
     });
     return unsub;
   }, [refreshProfile]);

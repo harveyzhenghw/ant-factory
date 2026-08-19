@@ -29,6 +29,12 @@ expo-server.log
 expo-run.log
 web-start.log
 
+# firebase emulator artifacts
+*-debug.log
+firebase-debug.log
+database-debug.log
+.firebase/
+
 # macOS
 .DS_Store
 *.pem

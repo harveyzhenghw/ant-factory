@@ -33,15 +33,10 @@ export default function TabLayout() {
           ),
         }}
       />
-      <Tabs.Screen
-        name="community/index"
-        options={{
-          title: 'Community',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="people" size={size} color={color} />
-          ),
-        }}
-      />
+      {/* Community depends on Firebase Storage for photos and will be hosted
+          separately later; hide the tab for now (href: null) without deleting
+          the routes. */}
+      <Tabs.Screen name="community/index" options={{ href: null }} />
       <Tabs.Screen
         name="profile/index"
         options={{

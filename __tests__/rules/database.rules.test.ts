@@ -86,3 +86,79 @@ describe('users node', () => {
     await assertFails(get(ref(db(null), `users/${ALICE}`)));
   });
 });
+
+async function seed(pathValue: Record<string, unknown>) {
+  await testEnv.withSecurityRulesDisabled(async (ctx) => {
+    const d = ctx.database();
+    for (const [p, v] of Object.entries(pathValue)) {
+      await set(ref(d, p), v);
+    }
+  });
+}
+
+describe('farms node', () => {
+  beforeEach(async () => {
+    await seed({ 'farms/f1': { userId: ALICE, name: 'Alice Colony' } });
+  });
+
+  it('allows an authenticated user to read the farms collection (needed for the userId query)', async () => {
+    await assertSucceeds(get(ref(db(ALICE), 'farms')));
+    await assertSucceeds(get(ref(db(BOB), 'farms')));
+  });
+
+  it('rejects unauthenticated reads of farms', async () => {
+    await assertFails(get(ref(db(null), 'farms')));
+  });
+
+  it('lets the owner write their farm but blocks writing someone else\'s', async () => {
+    await assertSucceeds(update(ref(db(ALICE), 'farms/f1'), { name: 'Renamed' }));
+    await assertFails(update(ref(db(BOB), 'farms/f1'), { name: 'Hijacked' }));
+  });
+});
+
+describe('queens node', () => {
+  beforeEach(async () => {
+    await seed({ 'queens/q1': { userId: ALICE, species: 'pavement', forSale: false, price: 0 } });
+  });
+
+  it('allows an authenticated user to read the queens collection (needed for getMyQueens/market)', async () => {
+    await assertSucceeds(get(ref(db(BOB), 'queens')));
+  });
+
+  it('rejects unauthenticated reads of queens', async () => {
+    await assertFails(get(ref(db(null), 'queens')));
+  });
+
+  it('blocks writing another user\'s queen', async () => {
+    await assertFails(update(ref(db(BOB), 'queens/q1'), { price: 1 }));
+  });
+});
+
+describe('marketListings node', () => {
+  beforeEach(async () => {
+    await seed({ 'marketListings/l1': { sellerId: ALICE, sellerName: 'alice', type: 'queen', price: 50, createdAt: 1 } });
+  });
+
+  it('allows an authenticated user to read the marketListings collection', async () => {
+    await assertSucceeds(get(ref(db(BOB), 'marketListings')));
+  });
+
+  it('rejects unauthenticated reads of marketListings', async () => {
+    await assertFails(get(ref(db(null), 'marketListings')));
+  });
+});
+
+describe('notifications node', () => {
+  beforeEach(async () => {
+    await seed({ 'notifications/alice/n1': { userId: ALICE, type: 'system', read: false, createdAt: 1 } });
+  });
+
+  it('lets the owner read their own notifications feed', async () => {
+    await assertSucceeds(get(ref(db(ALICE), `notifications/${ALICE}`)));
+  });
+
+  it('blocks reading another user\'s notifications feed', async () => {
+    await assertFails(get(ref(db(BOB), `notifications/${ALICE}`)));
+    await assertFails(get(ref(db(null), `notifications/${ALICE}`)));
+  });
+});

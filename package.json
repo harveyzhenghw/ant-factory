@@ -54,7 +54,7 @@
     "test:rules": "firebase emulators:exec --only database \"jest --config jest.rules.config.js\"",
     "doctor": "expo install --check",
     "build:web": "expo export --platform web",
-    "rules:deploy": "firebase deploy --only database:rules,storage:rules"
+    "rules:deploy": "firebase deploy --only database"
   },
   "jest": {
     "preset": "jest-expo",

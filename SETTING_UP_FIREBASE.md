@@ -28,16 +28,17 @@ is available on Firebase's free tier (Spark plan) with no credit card.
 3. On the next screen you'll see a `firebaseConfig` object. Map those values to
    `.env`:
 
-   | `.env` variable                  | `firebaseConfig` field |
-   |----------------------------------|------------------------|
-   | `EXPO_PUBLIC_FIREBASE_API_KEY`   | `apiKey`               |
-   | `EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN` | `authDomain`         |
-   | `EXPO_PUBLIC_FIREBASE_PROJECT_ID`  | `projectId`          |
-   | `EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET` | `storageBucket`    |
-   | `EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` | `messagingSenderId` |
-   | `EXPO_PUBLIC_FIREBASE_APP_ID`    | `appId`                |
+   | `.env` variable                            | `firebaseConfig` field |
+   | ------------------------------------------ | ---------------------- |
+   | `EXPO_PUBLIC_FIREBASE_API_KEY`             | `apiKey`               |
+   | `EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN`         | `authDomain`           |
+   | `EXPO_PUBLIC_FIREBASE_PROJECT_ID`          | `projectId`            |
+   | `EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET`      | `storageBucket`        |
+   | `EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` | `messagingSenderId`    |
+   | `EXPO_PUBLIC_FIREBASE_APP_ID`              | `appId`                |
 
    Example (real projects have different values):
+
    ```
    EXPO_PUBLIC_FIREBASE_API_KEY=AIzaSyD...
    EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN=ant-factory.firebaseapp.com
@@ -46,6 +47,7 @@ is available on Firebase's free tier (Spark plan) with no credit card.
    EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=1234567890
    EXPO_PUBLIC_FIREBASE_APP_ID=1:1234567890:web:abcdef
    ```
+
 4. Copy the `firebaseConfig` values into `.env`. **Do not commit `.env`**
    (it's gitignored).
 
@@ -69,24 +71,30 @@ is available on Firebase's free tier (Spark plan) with no credit card.
 5. Open **Rules** and paste the contents of this repo's `database.rules.json`,
    then **Publish**.
 
-## 5. Create the Storage bucket
+## 5. Storage bucket (deferred)
 
-1. Open **Build → Storage → Get started**.
-2. Keep the default bucket (the name matches `EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET`).
-3. Open **Rules** and paste the contents of this repo's `storage.rules`, then
-   **Publish**.
+> **Skip this for now.** The Community feature (the only thing that uses Cloud
+> Storage) is deferred and will be hosted separately later, so the app runs on
+> **Auth + Realtime Database only** — no Storage, no billing. `storage.rules`
+> stays in the repo for when Community returns. You can leave
+> `EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET` set to the default bucket value; nothing
+> reads from Storage while the Community tab is hidden.
 
 ## 6. Deploy rules (automatic)
 
-The repo ships with `firebase.json`, `database.rules.json`, and `storage.rules`.
-To deploy them in one command:
+The repo ships with `firebase.json` and `database.rules.json`. Deploy the
+Realtime Database rules with:
 
 ```bash
-npx firebase login         # one-time
-npm run rules:deploy
+npx firebase login         # one-time; must be the account that owns this project
+npm run rules:deploy       # firebase deploy --only database
 ```
 
-This applies the Realtime Database rules and the Storage rules.
+`rules:deploy` is intentionally **database-only** (Storage is deferred, see
+step 5). If the CLI is logged into a different Google account, switch with
+`npx firebase login:add` / `npx firebase login:use <email>`, or pass
+`--project <your-project-id>` — the account must have access to the project
+that owns `EXPO_PUBLIC_FIREBASE_DATABASE_URL`.
 
 ## 7. Configure Google Sign-In for web
 
@@ -96,7 +104,7 @@ This applies the Realtime Database rules and the Storage rules.
 origin** and an **Authorized redirect URI** matching that origin.
 
 1. Open the Google Cloud Console → **APIs & Services → Credentials**:
-   https://console.cloud.google.com/apis/credentials (this is the *Google Cloud*
+   https://console.cloud.google.com/apis/credentials (this is the _Google Cloud_
    console, not the Firebase console — the redirect URI can't be added from
    Firebase).
 2. Under **OAuth 2.0 Client IDs**, click the **Web** client (it has the same
@@ -157,7 +165,7 @@ npm run test:rules   # boots the emulator and runs the rules tests
 ## Security note
 
 The Honeydew economy is **client-trusted**: with no server, a determined user
-could inflate *their own* balance (which only affects their own colony). What
+could inflate _their own_ balance (which only affects their own colony). What
 the rules enforce is that **no one can tamper with another player's record**
 beyond paying them for a market sale, and balances can't go negative. All
 balance changes use atomic transactions/increments so concurrent writes never

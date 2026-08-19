@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import { Link } from 'expo-router';
-import { register } from '../../src/services/auth';
+import { register, authErrorMessage } from '../../src/services/auth';
 import { Colors } from '../../src/constants/colors';
 
 export default function RegisterScreen() {
@@ -23,7 +23,7 @@ export default function RegisterScreen() {
     try {
       await register(email, password, username);
     } catch (e: any) {
-      Alert.alert('Error', e.message);
+      Alert.alert('Error', authErrorMessage(e));
     } finally {
       setLoading(false);
     }

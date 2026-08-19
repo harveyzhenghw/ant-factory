@@ -3,7 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityInd
 import { Link } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
-import { login, loginWithGoogle } from '../../src/services/auth';
+import { login, loginWithGoogle, authErrorMessage } from '../../src/services/auth';
 import { Colors } from '../../src/constants/colors';
 
 WebBrowser.maybeCompleteAuthSession();
@@ -12,6 +12,7 @@ export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   const [, googleResponse, googlePrompt] = Google.useIdTokenAuthRequest({
     clientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_WEB,
@@ -22,9 +23,19 @@ export default function LoginScreen() {
   useEffect(() => {
     if (googleResponse?.type === 'success') {
       const { id_token } = googleResponse.params;
-      loginWithGoogle(id_token).catch((e) => Alert.alert('Error', e.message));
+      loginWithGoogle(id_token)
+        .catch((e) => Alert.alert('Error', authErrorMessage(e)))
+        .finally(() => setGoogleLoading(false));
+    } else if (googleResponse) {
+      // dismissed, cancelled or errored — clear the spinner.
+      setGoogleLoading(false);
     }
   }, [googleResponse]);
+
+  const handleGoogle = () => {
+    setGoogleLoading(true);
+    googlePrompt().catch(() => setGoogleLoading(false));
+  };
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -35,7 +46,7 @@ export default function LoginScreen() {
     try {
       await login(email, password);
     } catch (e: any) {
-      Alert.alert('Error', e.message);
+      Alert.alert('Error', authErrorMessage(e));
     } finally {
       setLoading(false);
     }
@@ -75,8 +86,8 @@ export default function LoginScreen() {
             <View style={styles.dividerLine} />
           </View>
 
-          <TouchableOpacity style={styles.googleBtn} onPress={() => googlePrompt()}>
-            <Text style={styles.googleBtnText}>Continue with Google</Text>
+          <TouchableOpacity style={[styles.googleBtn, googleLoading && styles.buttonDisabled]} onPress={handleGoogle} disabled={googleLoading}>
+            {googleLoading ? <ActivityIndicator color={Colors.ui.text} /> : <Text style={styles.googleBtnText}>Continue with Google</Text>}
           </TouchableOpacity>
         </View>
 

@@ -10,47 +10,47 @@
       }
     },
     "farms": {
+      ".read": "auth != null",
       ".indexOn": ["userId"],
       "$farmId": {
-        ".read": "auth != null && data.child('userId').val() == auth.uid",
         ".write": "auth != null && (newData.child('userId').val() == auth.uid || data.child('userId').val() == auth.uid)"
       }
     },
     "queens": {
+      ".read": "auth != null",
       ".indexOn": ["userId"],
       "$queenId": {
-        ".read": "auth != null && (data.child('userId').val() == auth.uid || data.child('forSale').val() == true)",
         ".write": "auth != null && (newData.child('userId').val() == auth.uid || data.child('userId').val() == auth.uid)"
       }
     },
     "marketListings": {
+      ".read": "auth != null",
       ".indexOn": ["createdAt"],
       "$listingId": {
-        ".read": "auth != null",
         ".write": "auth != null && (data.child('sellerId').val() == auth.uid || newData.child('sellerId').val() == auth.uid || (data.exists() && (!newData.exists() || newData.child('buyerId').val() == auth.uid)))"
       }
     },
     "communityPosts": {
+      ".read": "auth != null",
       ".indexOn": ["createdAt"],
       "$postId": {
-        ".read": "auth != null",
         ".write": "auth != null"
       }
     },
     "comments": {
       "$postId": {
+        ".read": "auth != null",
         ".indexOn": ["createdAt"],
         "$commentId": {
-          ".read": "auth != null",
           ".write": "auth != null && (newData.child('userId').val() == auth.uid || data.child('userId').val() == auth.uid)"
         }
       }
     },
     "notifications": {
       "$userId": {
+        ".read": "auth != null && auth.uid == $userId",
         ".indexOn": ["createdAt"],
         "$notificationId": {
-          ".read": "auth != null && auth.uid == $userId",
           ".write": "auth != null && (auth.uid == $userId || newData.child('userId').val() == auth.uid)"
         }
       }
