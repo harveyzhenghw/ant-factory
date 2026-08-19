@@ -42,52 +42,55 @@ export default function LoginScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Ant Factory</Text>
-      <Text style={styles.subtitle}>Build your colony</Text>
+    <View style={styles.background}>
+      <View style={styles.container}>
+        <Text style={styles.title}>Ant Factory</Text>
+        <Text style={styles.subtitle}>Build your colony</Text>
 
-      <View style={styles.form}>
-        <TextInput
-          style={styles.input}
-          placeholder="Email"
-          value={email}
-          onChangeText={setEmail}
-          autoCapitalize="none"
-          keyboardType="email-address"
-          placeholderTextColor={Colors.ui.textSecondary}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Password"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-          placeholderTextColor={Colors.ui.textSecondary}
-        />
-        <TouchableOpacity style={[styles.button, loading && styles.buttonDisabled]} onPress={handleLogin} disabled={loading}>
-          {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Sign In</Text>}
-        </TouchableOpacity>
+        <View style={styles.form}>
+          <TextInput
+            style={styles.input}
+            placeholder="Email"
+            value={email}
+            onChangeText={setEmail}
+            autoCapitalize="none"
+            keyboardType="email-address"
+            placeholderTextColor={Colors.ui.textSecondary}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Password"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+            placeholderTextColor={Colors.ui.textSecondary}
+          />
+          <TouchableOpacity style={[styles.button, loading && styles.buttonDisabled]} onPress={handleLogin} disabled={loading}>
+            {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Sign In</Text>}
+          </TouchableOpacity>
 
-        <View style={styles.divider}>
-          <View style={styles.dividerLine} />
-          <Text style={styles.dividerText}>or</Text>
-          <View style={styles.dividerLine} />
+          <View style={styles.divider}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>or</Text>
+            <View style={styles.dividerLine} />
+          </View>
+
+          <TouchableOpacity style={styles.googleBtn} onPress={() => googlePrompt()}>
+            <Text style={styles.googleBtnText}>Continue with Google</Text>
+          </TouchableOpacity>
         </View>
 
-        <TouchableOpacity style={styles.googleBtn} onPress={() => googlePrompt()}>
-          <Text style={styles.googleBtnText}>Continue with Google</Text>
-        </TouchableOpacity>
+        <Link href="/(auth)/register" style={styles.link}>
+          <Text style={styles.linkText}>Don&apos;t have an account? Sign up</Text>
+        </Link>
       </View>
-
-      <Link href="/(auth)/register" style={styles.link}>
-        <Text style={styles.linkText}>Don&apos;t have an account? Sign up</Text>
-      </Link>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.ui.background, justifyContent: 'center', padding: 24, maxWidth: 400, alignSelf: 'center', width: '100%' },
+  background: { flex: 1, backgroundColor: Colors.ui.background },
+  container: { flex: 1, justifyContent: 'center', padding: 24, maxWidth: 400, alignSelf: 'center', width: '100%' },
   title: { fontSize: 36, fontWeight: 'bold', color: Colors.primary, textAlign: 'center', marginBottom: 4 },
   subtitle: { fontSize: 16, color: Colors.ui.textSecondary, textAlign: 'center', marginBottom: 48 },
   form: { gap: 16 },

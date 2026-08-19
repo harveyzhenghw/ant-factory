@@ -30,28 +30,31 @@ export default function RegisterScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Join Ant Factory</Text>
-      <Text style={styles.subtitle}>Start your first colony</Text>
+    <View style={styles.background}>
+      <View style={styles.container}>
+        <Text style={styles.title}>Join Ant Factory</Text>
+        <Text style={styles.subtitle}>Start your first colony</Text>
 
-      <View style={styles.form}>
-        <TextInput style={styles.input} placeholder="Username" value={username} onChangeText={setUsername} autoCapitalize="none" placeholderTextColor={Colors.ui.textSecondary} />
-        <TextInput style={styles.input} placeholder="Email" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" placeholderTextColor={Colors.ui.textSecondary} />
-        <TextInput style={styles.input} placeholder="Password" value={password} onChangeText={setPassword} secureTextEntry placeholderTextColor={Colors.ui.textSecondary} />
-        <TouchableOpacity style={[styles.button, loading && styles.buttonDisabled]} onPress={handleRegister} disabled={loading}>
-          {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Create Account</Text>}
-        </TouchableOpacity>
+        <View style={styles.form}>
+          <TextInput style={styles.input} placeholder="Username" value={username} onChangeText={setUsername} autoCapitalize="none" placeholderTextColor={Colors.ui.textSecondary} />
+          <TextInput style={styles.input} placeholder="Email" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" placeholderTextColor={Colors.ui.textSecondary} />
+          <TextInput style={styles.input} placeholder="Password" value={password} onChangeText={setPassword} secureTextEntry placeholderTextColor={Colors.ui.textSecondary} />
+          <TouchableOpacity style={[styles.button, loading && styles.buttonDisabled]} onPress={handleRegister} disabled={loading}>
+            {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Create Account</Text>}
+          </TouchableOpacity>
+        </View>
+
+        <Link href="/(auth)/login" style={styles.link}>
+          <Text style={styles.linkText}>Already have an account? Sign in</Text>
+        </Link>
       </View>
-
-      <Link href="/(auth)/login" style={styles.link}>
-        <Text style={styles.linkText}>Already have an account? Sign in</Text>
-      </Link>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.ui.background, justifyContent: 'center', padding: 24, maxWidth: 400, alignSelf: 'center', width: '100%' },
+  background: { flex: 1, backgroundColor: Colors.ui.background },
+  container: { flex: 1, justifyContent: 'center', padding: 24, maxWidth: 400, alignSelf: 'center', width: '100%' },
   title: { fontSize: 36, fontWeight: 'bold', color: Colors.primary, textAlign: 'center', marginBottom: 4 },
   subtitle: { fontSize: 16, color: Colors.ui.textSecondary, textAlign: 'center', marginBottom: 48 },
   form: { gap: 16 },
